@@ -2,33 +2,54 @@ pipeline {
     agent any
 
     environment {
-        TOMCAT_WEBAPPS = '/opt/tomcat/webapps'  // Adjust path if needed
+        // Define Tomcat path and WAR file name
+        TOMCAT_HOME = '/opt/tomcat'  // Replace with your actual Tomcat path
+        TOMCAT_PORT = '8080'
+        WAR_FILE = 'sample-war.war'  // The name of the WAR file to be deployed
     }
 
     stages {
-        stage('Checkout Source Code') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/YOUR_USERNAME/sample-war.git'
+                // Checkout the repository from GitHub
+                git 'https://github.com/<your-username>/sample-war.git'
             }
         }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package'
+                script {
+                    // Build the project using Maven to generate the WAR file
+                    sh 'mvn clean package'
+                }
             }
         }
 
         stage('Deploy to Tomcat') {
             steps {
-                sh 'cp target/*.war $TOMCAT_WEBAPPS/sample.war'
-                sh 'sudo systemctl restart tomcat'
+                script {
+                    // Copy the WAR file to Tomcat's webapps directory
+                    sh """
+                        cp target/${WAR_FILE} ${TOMCAT_HOME}/webapps/
+                    """
+                }
             }
         }
 
-        stage('Show Name in Output') {
+        stage('Verify Deployment') {
             steps {
-                echo 'Deployment Done by YOUR_NAME'
+                script {
+                    // Verify if the WAR file is deployed and accessible
+                    echo "Check your browser at http://localhost:${TOMCAT_PORT}/sample-war"
+                }
             }
+        }
+    }
+
+    post {
+        always {
+            // Clean up or notification logic (optional)
+            echo "Pipeline completed"
         }
     }
 }
